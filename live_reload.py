@@ -16,7 +16,7 @@ class ChangeHandler(FileSystemEventHandler):
             print("Change detected -> Restarting")
             self.process.terminate()
             self.process.wait()
-        
+
         self.process = subprocess.Popen(["python", SCRIPT_TO_RUN])
 
     def on_modified(self, event):
