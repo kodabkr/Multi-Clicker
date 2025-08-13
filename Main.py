@@ -8,19 +8,17 @@ import json
 import os
 import subprocess
 
-# --- CONFIGURATION ---
+# Config
 NUM_CLICK_POSITIONS = 20
 DEFAULT_ACCENT_COLOR = "#1F6AA5"
 CONFIG_DIR = "multiclicker_configs"
 ICON_FILE = "my_icon.ico"
 AHK_SCRIPT_NAME = "click_backend.ahk"
 
-# --- Set AutoHotkey Path ---
 AHK_EXECUTABLE_PATH = r"C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe"
 AHK_SCRIPT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), AHK_SCRIPT_NAME)
 
 
-# --- Core Clicker Thread ---
 class AutoClickerThread(threading.Thread):
     def __init__(self, settings):
         super().__init__()
@@ -55,12 +53,11 @@ class AutoClickerThread(threading.Thread):
             time.sleep(0.1)
 
 
-# --- Main Application Window ---
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
         self.title("Multi-Clicker")
-        self.geometry("600x650") # MODIFIED: Increased width for new column
+        self.geometry("600x650")
         customtkinter.set_appearance_mode("Dark")
 
         try:
@@ -73,9 +70,9 @@ class App(customtkinter.CTk):
         if not os.path.exists(AHK_EXECUTABLE_PATH) or not os.path.exists(AHK_SCRIPT_PATH):
             self._show_dependency_error()
             return
-        
+
         self.accent_color = DEFAULT_ACCENT_COLOR
-        self.accent_widgets = [] 
+        self.accent_widgets = []
 
         self.always_on_top_var = customtkinter.StringVar(value="off")
         self.click_mode_var = customtkinter.StringVar(value="Multi")
@@ -86,7 +83,7 @@ class App(customtkinter.CTk):
         self._create_color_config_frame()
         self._create_profile_config_frame()
         self._create_bottom_frame()
-        
+
         self.on_mode_change()
         self.setup_hotkeys()
         self._setup_config_management()
@@ -102,7 +99,7 @@ class App(customtkinter.CTk):
                       "Please ensure the path in the script is correct and the .ahk file is in the same folder.")
         error_label = customtkinter.CTkLabel(self, text=error_text, text_color="red", font=("Calibri", 16), justify="left")
         error_label.pack(expand=True, padx=20, pady=20)
-    
+
     def _create_top_frame(self):
         top_frame = customtkinter.CTkFrame(self, corner_radius=0)
         top_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
@@ -113,11 +110,11 @@ class App(customtkinter.CTk):
         self.accent_widgets.extend([self.multi_radio, self.always_on_top_check])
         self.multi_radio.grid(row=0, column=2, padx=10, pady=10, sticky="w")
         self.always_on_top_check.grid(row=0, column=3, padx=10, pady=10, sticky="e")
-    
+
     def _create_main_frame(self):
         self.main_frame = customtkinter.CTkFrame(self)
         self.main_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=0)
-    
+
     def _create_color_config_frame(self):
         color_frame = customtkinter.CTkFrame(self)
         color_frame.grid(row=2, column=0, sticky="ew", padx=10, pady=(10, 5))
@@ -141,7 +138,7 @@ class App(customtkinter.CTk):
         load_button.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
         save_button.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
         delete_button.grid(row=2, column=2, padx=5, pady=5, sticky="ew")
-    
+
     def _create_bottom_frame(self):
         bottom_frame = customtkinter.CTkFrame(self, corner_radius=0)
         bottom_frame.grid(row=4, column=0, sticky="ew", padx=10, pady=(0, 10))
@@ -151,7 +148,7 @@ class App(customtkinter.CTk):
         self.accent_widgets.append(self.start_button)
         self.start_button.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
         self.stop_button.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
-    
+
     def on_mode_change(self, *args):
         for widget in self.main_frame.winfo_children(): widget.destroy()
         if self.click_mode_var.get() == "Single": self._build_single_clicker_ui()
@@ -159,10 +156,9 @@ class App(customtkinter.CTk):
         self._update_widget_colors()
 
     def _build_single_clicker_ui(self):
-        customtkinter.CTkLabel(self.main_frame, text="Single Mode is currently disabled in the AHK version.").pack(padx=20, pady=20)
+        customtkinter.CTkLabel(self.main_frame, text="Single Mode is currently disabled.").pack(padx=20, pady=20)
 
     def _build_multi_clicker_ui(self):
-        # ... UI building logic ...
         config_frame = customtkinter.CTkFrame(self.main_frame)
         config_frame.pack(fill='x', padx=5, pady=5)
         customtkinter.CTkLabel(config_frame, text="Delay Between Click(s):").pack(side='left', padx=5, pady=5)
@@ -173,42 +169,38 @@ class App(customtkinter.CTk):
         self.loop_checkbox = customtkinter.CTkCheckBox(config_frame, text="Loop", variable=self.loop_var)
         self.accent_widgets.append(self.loop_checkbox)
         self.loop_checkbox.pack(side='left', padx=10, pady=5)
-        
+
         self.points_frame = customtkinter.CTkScrollableFrame(self.main_frame, label_text="Click Sequence")
         self.accent_widgets.append(self.points_frame)
         self.points_frame.pack(fill='both', expand=True, padx=5, pady=5)
-        
-        # MODIFIED: Added "Name" header and adjusted column weights
+
         headers = ["#", "On", "Name", "Set Position", "Coordinates", "Clicks"]
-        self.points_frame.grid_columnconfigure((2, 4), weight=1) # Name and Coordinates columns are expandable
+        self.points_frame.grid_columnconfigure((2, 4), weight=1)
         for col, header in enumerate(headers): 
             customtkinter.CTkLabel(self.points_frame, text=header, font=customtkinter.CTkFont(weight="bold")).grid(row=0, column=col, padx=5, pady=5)
-        
+
         self.points_ui = []
         import pyautogui
         for i in range(NUM_CLICK_POSITIONS):
             row_num = i + 1
             on_var = customtkinter.IntVar(value=1 if i < 3 else 0)
             checkbox = customtkinter.CTkCheckBox(self.points_frame, text="", variable=on_var)
-            
-            # MODIFIED: Create the new name entry widget
+
             name_entry = customtkinter.CTkEntry(self.points_frame, placeholder_text=f"Action #{row_num}")
-            
+
             get_pos_button = customtkinter.CTkButton(self.points_frame, text="Get Pos", width=80, command=lambda r=i, pg=pyautogui: self.get_mouse_position(r, pg))
             self.accent_widgets.extend([checkbox, get_pos_button])
-            
-            # Grid placement for all widgets in the row
+
             customtkinter.CTkLabel(self.points_frame, text=f"#{row_num}").grid(row=row_num, column=0, padx=5)
             checkbox.grid(row=row_num, column=1, padx=5)
-            name_entry.grid(row=row_num, column=2, padx=5, pady=2, sticky="ew") # MODIFIED
-            get_pos_button.grid(row=row_num, column=3, padx=5, pady=2) # MODIFIED
+            name_entry.grid(row=row_num, column=2, padx=5, pady=2, sticky="ew")
+            get_pos_button.grid(row=row_num, column=3, padx=5, pady=2)
             pos_label = customtkinter.CTkLabel(self.points_frame, text="Not Set", anchor="w")
-            pos_label.grid(row=row_num, column=4, padx=10, sticky="ew") # MODIFIED
+            pos_label.grid(row=row_num, column=4, padx=10, sticky="ew")
             clicks_entry = customtkinter.CTkEntry(self.points_frame, width=50)
             clicks_entry.insert(0, "1")
-            clicks_entry.grid(row=row_num, column=5, padx=5) # MODIFIED
-            
-            # MODIFIED: Add name_entry to the list for this row
+            clicks_entry.grid(row=row_num, column=5, padx=5)
+
             self.points_ui.append({'on_var': on_var, 'name_entry': name_entry, 'pos_label': pos_label, 'clicks_entry': clicks_entry, 'coords': None})
 
     def _open_color_chooser(self):
@@ -225,7 +217,7 @@ class App(customtkinter.CTk):
                 widget.configure(scrollbar_button_color=self.accent_color)
             else:
                 widget.configure(fg_color=self.accent_color)
-    
+
     def get_mouse_position(self, row_index, pg_module):
         label = self.points_ui[row_index]['pos_label']
         label.configure(text="Getting pos in 3s...")
@@ -236,7 +228,7 @@ class App(customtkinter.CTk):
         pos = pg_module.position()
         self.points_ui[row_index]['coords'] = (pos.x, pos.y)
         self.points_ui[row_index]['pos_label'].configure(text=f"({pos.x}, {pos.y})")
-        
+
     def start_clicking(self):
         if self.start_button.cget("state") == "disabled": return
         settings = {'mode': self.click_mode_var.get()}
@@ -321,18 +313,17 @@ class App(customtkinter.CTk):
         try:
             self.accent_color = config_data.get("accent_color", DEFAULT_ACCENT_COLOR)
             self._update_widget_colors()
-            
+
             self.multi_delay_entry.delete(0, 'end'); self.multi_delay_entry.insert(0, config_data.get("delay", "0.1"))
             self.loop_var.set(config_data.get("loop", 1))
             for i, point_data in enumerate(config_data.get("points", [])):
                 if i < len(self.points_ui):
                     self.points_ui[i]["on_var"].set(point_data.get("enabled", 0))
                     self.points_ui[i]["clicks_entry"].delete(0, 'end'); self.points_ui[i]["clicks_entry"].insert(0, point_data.get("clicks", "1"))
-                    
-                    # MODIFIED: Load name, providing a blank default if it doesn't exist in the file
+
                     self.points_ui[i]["name_entry"].delete(0, 'end')
                     self.points_ui[i]["name_entry"].insert(0, point_data.get("name", ""))
-                    
+
                     coords = point_data.get("coords"); self.points_ui[i]["coords"] = coords
                     self.points_ui[i]["pos_label"].configure(text=f"({coords[0]}, {coords[1]})" if coords else "Not Set")
         except Exception as e: tkinter.messagebox.showerror("Apply Config Error", f"An error occurred applying settings: {e}")
