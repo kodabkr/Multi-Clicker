@@ -18,7 +18,6 @@ AHK_SCRIPT_NAME = "click_backend.ahk"
 AHK_EXECUTABLE_PATH = r"C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe"
 AHK_SCRIPT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), AHK_SCRIPT_NAME)
 
-
 class AutoClickerThread(threading.Thread):
     def __init__(self, settings):
         super().__init__()
